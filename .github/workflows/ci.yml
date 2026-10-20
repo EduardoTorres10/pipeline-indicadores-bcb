@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  python:
+    name: Testes da ingestão
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests google-cloud-bigquery pytest ruff
+      - name: Lint
+        run: ruff check include tests dags
+      - name: Testes unitários
+        run: python -m pytest -q tests
+
+  dbt-parse:
+    name: Validação do projeto dbt
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dbt
+    env:
+      GCP_PROJECT_ID: ci-placeholder
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/placeholder.json
+      DBT_SEND_ANONYMOUS_USAGE_STATS: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "dbt-bigquery==1.12.*"
+      - run: dbt deps --profiles-dir .
+      # parse valida Jinja, refs, sources e YAML sem precisar conectar no BigQuery
+      - run: dbt parse --profiles-dir . --target prod
+
+  dbt-build:
+    name: dbt build no BigQuery
+    # roda só na main e só se o segredo GCP_SA_KEY estiver configurado no repositório
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [python, dbt-parse]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dbt
+    env:
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+      BQ_DATASET_RAW: raw_bcb
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/gcp_key.json
+      DBT_SEND_ANONYMOUS_USAGE_STATS: "false"
+      HAS_KEY: ${{ secrets.GCP_SA_KEY != '' }}
+    steps:
+      - uses: actions/checkout@v4
+        if: env.HAS_KEY == 'true'
+      - uses: actions/setup-python@v5
+        if: env.HAS_KEY == 'true'
+        with:
+          python-version: "3.12"
+      - name: Grava a chave da service account
+        if: env.HAS_KEY == 'true'
+        run: echo '${{ secrets.GCP_SA_KEY }}' > /tmp/gcp_key.json
+      - if: env.HAS_KEY == 'true'
+        run: pip install "dbt-bigquery==1.12.*"
+      - if: env.HAS_KEY == 'true'
+        run: dbt deps --profiles-dir . && dbt build --profiles-dir . --target prod
+      - if: env.HAS_KEY != 'true'
+        working-directory: .
+        run: echo "Segredo GCP_SA_KEY não configurado — etapa de build pulada."

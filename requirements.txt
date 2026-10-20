@@ -1,0 +1,3 @@
+# Dependências da ingestão (instaladas na imagem do Airflow)
+requests>=2.31
+google-cloud-bigquery>=3.20

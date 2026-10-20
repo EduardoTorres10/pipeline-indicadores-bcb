@@ -1,0 +1,24 @@
+# Nenhum segredo aqui: tudo vem de variáveis de ambiente.
+indicadores_bcb:
+  target: dev
+  outputs:
+    # Desenvolvimento local: autentica com `gcloud auth application-default login`
+    dev:
+      type: bigquery
+      method: oauth
+      project: "{{ env_var('GCP_PROJECT_ID') }}"
+      dataset: dbt_dev
+      location: "{{ env_var('BQ_LOCATION', 'US') }}"
+      threads: 4
+      job_execution_timeout_seconds: 300
+
+    # Airflow e CI: autentica com a chave da service account
+    prod:
+      type: bigquery
+      method: service-account
+      keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS') }}"
+      project: "{{ env_var('GCP_PROJECT_ID') }}"
+      dataset: analytics
+      location: "{{ env_var('BQ_LOCATION', 'US') }}"
+      threads: 4
+      job_execution_timeout_seconds: 300

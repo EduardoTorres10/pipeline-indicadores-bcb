@@ -1,0 +1,13 @@
+version: 2
+
+models:
+  - name: int_indicadores__diarios
+    description: >
+      Calendário diário contínuo com Selic e dólar pivotados. Em dias sem
+      cotação, `dolar_venda` repete o último valor conhecido (forward fill)
+      e `dolar_venda_observado` fica nulo.
+    columns:
+      - name: data
+        data_tests: [unique, not_null]
+      - name: teve_cotacao_dolar
+        data_tests: [not_null]

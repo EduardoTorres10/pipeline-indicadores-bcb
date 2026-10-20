@@ -1,0 +1,20 @@
+version: 2
+
+models:
+  - name: stg_bcb__series_sgs
+    description: Séries do SGS tipadas e deduplicadas. Uma linha por série e data.
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [codigo_serie, data_referencia]
+    columns:
+      - name: codigo_serie
+        data_tests: [not_null]
+      - name: nome_serie
+        data_tests: [not_null]
+      - name: data_referencia
+        description: Data de referência do valor (para o IPCA, o primeiro dia do mês).
+        data_tests: [not_null]
+      - name: valor
+        description: Valor numérico da série, na unidade original do BCB.
+        data_tests: [not_null]

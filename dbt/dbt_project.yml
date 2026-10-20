@@ -1,0 +1,24 @@
+name: indicadores_bcb
+version: "1.0.0"
+config-version: 2
+profile: indicadores_bcb
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  indicadores_bcb:
+    # Tudo materializado como view/table: o BigQuery Sandbox não aceita DML,
+    # então modelos incrementais (MERGE) não são usados neste projeto.
+    staging:
+      +materialized: view
+      +schema: staging
+    intermediate:
+      +materialized: view
+      +schema: intermediate
+    marts:
+      +materialized: table
+      +schema: marts

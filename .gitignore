@@ -1,0 +1,31 @@
+# Credenciais — NUNCA versionar
+.env
+*.json
+!dbt/**/*.json.example
+include/gcp/*
+!include/gcp/.gitkeep
+gcp-key*.json
+
+# dbt
+dbt/target/
+dbt/dbt_packages/
+dbt/logs/
+dbt/.user.yml
+
+# Airflow / Astro
+.astro/
+airflow_settings.yaml
+logs/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+
+# SO / IDE
+.DS_Store
+.vscode/
+.idea/
+.ruff_cache/
