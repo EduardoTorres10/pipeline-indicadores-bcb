@@ -4,7 +4,7 @@ Pipeline ELT de ponta a ponta que coleta diariamente a **Selic**, o **IPCA** e o
 
 O resultado são duas tabelas prontas para análise: uma visão diária de juros e câmbio e uma visão mensal de inflação acumulada e **juro real ex-post**.
 
-![CI](https://github.com/SEU_USUARIO/pipeline-indicadores-bcb/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/EduardoTorres10/pipeline-indicadores-bcb/actions/workflows/ci.yml/badge.svg)
 
 ## Arquitetura
 
