@@ -1,0 +1,14 @@
+.git
+.github
+.env
+.venv
+venv
+.astro
+.pytest_cache
+.ruff_cache
+**/__pycache__
+dbt/target
+dbt/dbt_packages
+dbt/logs
+logs
+airflow_settings.yaml

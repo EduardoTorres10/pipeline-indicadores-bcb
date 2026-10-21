@@ -13,7 +13,8 @@ dbt/logs/
 dbt/.user.yml
 
 # Airflow / Astro
-.astro/
+.astro/*
+!.astro/config.yaml
 airflow_settings.yaml
 logs/
 
