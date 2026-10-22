@@ -1,13 +1,29 @@
 version: 2
 
 models:
+  - name: dim_calendario
+    description: >
+      Dimensão de datas contínua, em anos completos, com nomes em português.
+      Usada como tabela de datas no Power BI.
+    columns:
+      - name: data
+        data_tests: [unique, not_null]
+      - name: mes_ano
+        description: Rótulo curto do mês (ex. out/26). Ordenar por mes_ano_ordem.
+
   - name: fct_indicadores_diarios
     description: >
       Uma linha por dia corrido. Selic meta e dólar (com o último valor conhecido
       em fins de semana e feriados), variação diária e média móvel de 21 dias úteis.
     columns:
       - name: data
-        data_tests: [unique, not_null]
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_calendario')
+                field: data
       - name: dia_util
         description: Verdadeiro quando houve cotação de dólar no dia.
       - name: selic_meta_aa
@@ -37,7 +53,13 @@ models:
       Selic média do mês e juro real ex-post.
     columns:
       - name: mes
-        data_tests: [unique, not_null]
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_calendario')
+                field: data
       - name: ipca_mensal_pct
         data_tests:
           - not_null

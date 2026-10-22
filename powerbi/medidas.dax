@@ -1,0 +1,140 @@
+// =============================================================================
+// Medidas do relatório "Indicadores Econômicos BCB"
+// Crie uma tabela vazia chamada _Medidas e cole cada medida nela.
+//
+// Modelo (esquema estrela, filtro em direção única):
+//   dim_calendario[data] 1 ──► * fct_indicadores_diarios[data]
+//   dim_calendario[data] 1 ──► * fct_inflacao_juro_real_mensal[mes]
+//
+// Granularidade:
+//   fct_indicadores_diarios       = 1 linha por dia corrido
+//   fct_inflacao_juro_real_mensal = 1 linha por mês (mes = 1º dia do mês)
+//
+// As colunas do BigQuery estão em pontos percentuais (4.5 = 4,5%).
+// Todas as medidas de taxa dividem por 100 e devem ser formatadas como Porcentagem.
+// =============================================================================
+
+
+// ---------------------------------------------------------------- Juros ----
+
+// Meta Selic vigente no último dia do período filtrado.
+Selic Meta =
+VAR UltimaData =
+    CALCULATE ( MAX ( fct_indicadores_diarios[data] ) )
+RETURN
+    DIVIDE (
+        CALCULATE (
+            MAX ( fct_indicadores_diarios[selic_meta_aa] ),
+            fct_indicadores_diarios[data] = UltimaData
+        ),
+        100
+    )
+
+// Juro real ex-post (Selic média do mês vs. IPCA 12m) do último mês com valor.
+Juro Real Ex-Post =
+VAR UltimoMes =
+    CALCULATE (
+        MAX ( fct_inflacao_juro_real_mensal[mes] ),
+        NOT ISBLANK ( fct_inflacao_juro_real_mensal[juro_real_ex_post_aa] )
+    )
+RETURN
+    DIVIDE (
+        CALCULATE (
+            MAX ( fct_inflacao_juro_real_mensal[juro_real_ex_post_aa] ),
+            fct_inflacao_juro_real_mensal[mes] = UltimoMes
+        ),
+        100
+    )
+
+
+// ------------------------------------------------------------- Inflação ----
+
+// IPCA acumulado em 12 meses no último mês com valor dentro do período.
+IPCA 12 Meses =
+VAR UltimoMes =
+    CALCULATE (
+        MAX ( fct_inflacao_juro_real_mensal[mes] ),
+        NOT ISBLANK ( fct_inflacao_juro_real_mensal[ipca_12m_pct] )
+    )
+RETURN
+    DIVIDE (
+        CALCULATE (
+            MAX ( fct_inflacao_juro_real_mensal[ipca_12m_pct] ),
+            fct_inflacao_juro_real_mensal[mes] = UltimoMes
+        ),
+        100
+    )
+
+// IPCA do mês. Em contextos com vários meses, devolve o do último mês.
+IPCA Mensal =
+VAR UltimoMes =
+    MAX ( fct_inflacao_juro_real_mensal[mes] )
+RETURN
+    DIVIDE (
+        CALCULATE (
+            MAX ( fct_inflacao_juro_real_mensal[ipca_mensal_pct] ),
+            fct_inflacao_juro_real_mensal[mes] = UltimoMes
+        ),
+        100
+    )
+
+// Inflação composta de todos os meses do período filtrado: produto de (1 + taxa) - 1.
+// Funciona para qualquer seleção (um ano, um trimestre, um intervalo livre).
+IPCA Acumulado no Período =
+VAR Meses =
+    COUNTROWS ( fct_inflacao_juro_real_mensal )
+VAR Fator =
+    PRODUCTX (
+        fct_inflacao_juro_real_mensal,
+        1 + fct_inflacao_juro_real_mensal[ipca_mensal_pct] / 100
+    )
+RETURN
+    IF ( Meses > 0, Fator - 1 )
+
+
+// ---------------------------------------------------------------- Câmbio ----
+
+// Cotação no último dia do período (repete a última cotação em fins de semana).
+Dólar Fechamento =
+VAR UltimaData =
+    CALCULATE ( MAX ( fct_indicadores_diarios[data] ) )
+RETURN
+    CALCULATE (
+        MAX ( fct_indicadores_diarios[dolar_venda] ),
+        fct_indicadores_diarios[data] = UltimaData
+    )
+
+// Cotação no primeiro dia do período.
+Dólar Abertura =
+VAR PrimeiraData =
+    CALCULATE ( MIN ( fct_indicadores_diarios[data] ) )
+RETURN
+    CALCULATE (
+        MAX ( fct_indicadores_diarios[dolar_venda] ),
+        fct_indicadores_diarios[data] = PrimeiraData
+    )
+
+// Média só dos dias com cotação, para fins de semana não pesarem na média.
+Dólar Médio =
+CALCULATE (
+    AVERAGE ( fct_indicadores_diarios[dolar_venda] ),
+    fct_indicadores_diarios[dia_util] = TRUE ()
+)
+
+Dólar Variação no Período =
+DIVIDE ( [Dólar Fechamento] - [Dólar Abertura], [Dólar Abertura] )
+
+// Mesma medida no período equivalente do ano anterior (requer dim_calendario
+// marcada como tabela de datas).
+Dólar Fechamento Ano Anterior =
+CALCULATE ( [Dólar Fechamento], SAMEPERIODLASTYEAR ( dim_calendario[data] ) )
+
+Dólar Variação em 12 Meses =
+DIVIDE ( [Dólar Fechamento] - [Dólar Fechamento Ano Anterior], [Dólar Fechamento Ano Anterior] )
+
+
+// ------------------------------------------------------------- Rótulos ----
+
+// Texto para cartões e títulos dinâmicos: "Dados até 21/10/2026".
+Rótulo Atualização =
+"Dados até " & FORMAT ( CALCULATE ( MAX ( fct_indicadores_diarios[data] ), ALL ( dim_calendario ) ), "dd/mm/yyyy" )

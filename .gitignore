@@ -1,10 +1,15 @@
 # Credenciais — NUNCA versionar
 .env
-*.json
-!dbt/**/*.json.example
 include/gcp/*
 !include/gcp/.gitkeep
+*service_account*.json
+*service-account*.json
 gcp-key*.json
+portfolio-dados-*.json
+
+# Power BI (formato PBIP): cache local e configurações da máquina
+**/.pbi/localSettings.json
+**/.pbi/cache.abf
 
 # dbt
 dbt/target/
