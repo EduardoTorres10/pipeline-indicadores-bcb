@@ -1,0 +1,84 @@
+table fct_inflacao_juro_real_mensal
+	lineageTag: aa20022a-d77c-4bc7-8245-aa2c9e89f32d
+
+	column mes
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 1579da54-46b8-405d-a21b-6d41c6ddf00f
+		summarizeBy: none
+		sourceColumn: mes
+
+		variation Variação
+			isDefault
+			relationship: f79285cd-00da-4bb9-9fcc-1a5a5cf74389
+			defaultHierarchy: LocalDateTable_996a9374-c3b3-4962-8023-d19550815aa7.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column ipca_mensal_pct
+		dataType: double
+		lineageTag: 801680cf-298b-4aae-8a32-d1ea398dc194
+		summarizeBy: sum
+		sourceColumn: ipca_mensal_pct
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column ipca_acumulado_ano_pct
+		dataType: double
+		lineageTag: 4c5f8e5d-841a-4965-b131-61365134fcec
+		summarizeBy: sum
+		sourceColumn: ipca_acumulado_ano_pct
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column ipca_12m_pct
+		dataType: double
+		lineageTag: d63fbc81-b8bb-4e0f-a445-e0b370ddd7a8
+		summarizeBy: sum
+		sourceColumn: ipca_12m_pct
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column selic_meta_media_aa
+		dataType: double
+		lineageTag: 4613ef06-26bb-4465-89cf-ab1147a775aa
+		summarizeBy: sum
+		sourceColumn: selic_meta_media_aa
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	column juro_real_ex_post_aa
+		dataType: double
+		lineageTag: 109777cf-b7bd-4bd4-9ea3-9e048fb1e5ae
+		summarizeBy: sum
+		sourceColumn: juro_real_ex_post_aa
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	partition fct_inflacao_juro_real_mensal = m
+		mode: import
+		source =
+				let
+				    Fonte = GoogleBigQuery.Database([Implementation="2.0"]),
+				    #"portfolio-dados-512321_Database" = Fonte{[Name="portfolio-dados-512321",Kind="Database"]}[Data],
+				    marts_Schema = #"portfolio-dados-512321_Database"{[Name="marts",Kind="Schema"]}[Data],
+				    fct_inflacao_juro_real_mensal_Table = marts_Schema{[Name="fct_inflacao_juro_real_mensal",Kind="Table"]}[Data]
+				in
+				    fct_inflacao_juro_real_mensal_Table
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+

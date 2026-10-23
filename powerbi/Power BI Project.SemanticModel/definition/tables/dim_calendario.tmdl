@@ -1,0 +1,136 @@
+table dim_calendario
+	lineageTag: 0dde64d5-205d-468b-8ebf-38d1c181eab2
+
+	column data
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 04bb5e8b-4293-4e3c-9653-251b4e002604
+		summarizeBy: none
+		sourceColumn: data
+
+		variation Variação
+			isDefault
+			relationship: 9788dc14-42af-4173-a0b2-b4f318c50cda
+			defaultHierarchy: LocalDateTable_ce3e7866-bb5c-4095-99dc-6a61fc07fef3.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column ano
+		dataType: int64
+		formatString: 0
+		lineageTag: 1193a05e-35a4-4c38-9451-cd9d0eddf840
+		summarizeBy: sum
+		sourceColumn: ano
+
+		annotation SummarizationSetBy = Automatic
+
+	column trimestre
+		dataType: int64
+		formatString: 0
+		lineageTag: f8ea31e4-cffe-49b9-9cc1-614b6d923b23
+		summarizeBy: sum
+		sourceColumn: trimestre
+
+		annotation SummarizationSetBy = Automatic
+
+	column ano_trimestre
+		dataType: string
+		lineageTag: 61a09756-f750-4184-b3c8-73ff06b79964
+		summarizeBy: none
+		sourceColumn: ano_trimestre
+
+		annotation SummarizationSetBy = Automatic
+
+	column mes_numero
+		dataType: int64
+		formatString: 0
+		lineageTag: c46dfdec-eb1e-4d80-afac-a992cc1fac31
+		summarizeBy: sum
+		sourceColumn: mes_numero
+
+		annotation SummarizationSetBy = Automatic
+
+	column mes_nome
+		dataType: string
+		lineageTag: 2d44c4b5-b7a2-44bb-a648-bd8cd801f26d
+		summarizeBy: none
+		sourceColumn: mes_nome
+
+		annotation SummarizationSetBy = Automatic
+
+	column mes_ano
+		dataType: string
+		lineageTag: 3fc89fb3-245e-4841-8178-9f825bcfe0ef
+		summarizeBy: none
+		sourceColumn: mes_ano
+
+		annotation SummarizationSetBy = Automatic
+
+	column mes_ano_ordem
+		dataType: int64
+		formatString: 0
+		lineageTag: a40b4e7d-826b-4cb6-97fc-a26f53320a2d
+		summarizeBy: sum
+		sourceColumn: mes_ano_ordem
+
+		annotation SummarizationSetBy = Automatic
+
+	column inicio_mes
+		dataType: dateTime
+		formatString: Long Date
+		lineageTag: 6af9c09c-ba15-41fa-97fa-2279fd456973
+		summarizeBy: none
+		sourceColumn: inicio_mes
+
+		variation Variação
+			isDefault
+			relationship: 91b37d2b-b877-439f-a6c6-44c88668a09e
+			defaultHierarchy: LocalDateTable_3e9bb6fb-fe73-4a2d-a998-db3b5564e756.'Hierarquia de datas'
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column dia_semana_numero
+		dataType: int64
+		formatString: 0
+		lineageTag: 4b8e82f7-4307-4046-8392-be4368f02f48
+		summarizeBy: sum
+		sourceColumn: dia_semana_numero
+
+		annotation SummarizationSetBy = Automatic
+
+	column dia_semana_nome
+		dataType: string
+		lineageTag: 835af288-f1a0-4348-b6b1-3a3af3ba0dad
+		summarizeBy: none
+		sourceColumn: dia_semana_nome
+
+		annotation SummarizationSetBy = Automatic
+
+	column fim_de_semana
+		dataType: boolean
+		formatString: """TRUE"";""TRUE"";""FALSE"""
+		lineageTag: 7b657791-7247-4e4c-9b06-afb77606dae3
+		summarizeBy: none
+		sourceColumn: fim_de_semana
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_calendario = m
+		mode: import
+		source =
+				let
+				    Fonte = GoogleBigQuery.Database([Implementation="2.0"]),
+				    #"portfolio-dados-512321_Database" = Fonte{[Name="portfolio-dados-512321",Kind="Database"]}[Data],
+				    marts_Schema = #"portfolio-dados-512321_Database"{[Name="marts",Kind="Schema"]}[Data],
+				    dim_calendario_Table = marts_Schema{[Name="dim_calendario",Kind="Table"]}[Data]
+				in
+				    dim_calendario_Table
+
+	annotation PBI_NavigationStepName = Navegação
+
+	annotation PBI_ResultType = Table
+
