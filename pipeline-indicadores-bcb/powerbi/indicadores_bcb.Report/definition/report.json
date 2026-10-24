@@ -1,0 +1,62 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/report/1.3.0/schema.json",
+  "themeCollection": {
+    "baseTheme": {
+      "name": "CY23SU04",
+      "reportVersionAtImport": "5.46",
+      "type": "SharedResources"
+    },
+    "customTheme": {
+      "name": "TemaIndicadoresEscuro.json",
+      "reportVersionAtImport": "5.46",
+      "type": "RegisteredResources"
+    }
+  },
+  "layoutOptimization": "None",
+  "resourcePackages": [
+    {
+      "name": "SharedResources",
+      "type": "SharedResources",
+      "items": [
+        {
+          "name": "CY23SU04",
+          "path": "BaseThemes/CY23SU04.json",
+          "type": "BaseTheme"
+        }
+      ]
+    },
+    {
+      "name": "RegisteredResources",
+      "type": "RegisteredResources",
+      "items": [
+        {
+          "name": "TemaIndicadoresEscuro.json",
+          "path": "TemaIndicadoresEscuro.json",
+          "type": "CustomTheme"
+        },
+        {
+          "name": "fundo_visao_geral.png",
+          "path": "fundo_visao_geral.png",
+          "type": "Image"
+        },
+        {
+          "name": "fundo_cambio.png",
+          "path": "fundo_cambio.png",
+          "type": "Image"
+        },
+        {
+          "name": "fundo_inflacao.png",
+          "path": "fundo_inflacao.png",
+          "type": "Image"
+        }
+      ]
+    }
+  ],
+  "settings": {
+    "useStylableVisualContainerHeader": true,
+    "exportDataMode": "AllowSummarized",
+    "defaultDrillFilterOtherVisuals": true,
+    "allowChangeFilterTypes": true,
+    "useEnhancedTooltips": true
+  }
+}

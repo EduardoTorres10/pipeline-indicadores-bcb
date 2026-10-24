@@ -1,0 +1,38 @@
+{
+  "name": "Indicadores BCB",
+  "dataColors": [
+    "#1F4E79",
+    "#C0392B",
+    "#2E8B57",
+    "#E67E22",
+    "#6B7280",
+    "#8E44AD",
+    "#16A085",
+    "#D4AC0D"
+  ],
+  "foreground": "#1F2937",
+  "foregroundNeutralSecondary": "#6B7280",
+  "background": "#FFFFFF",
+  "backgroundLight": "#F3F5F8",
+  "tableAccent": "#1F4E79",
+  "good": "#2E8B57",
+  "neutral": "#E67E22",
+  "bad": "#C0392B",
+  "textClasses": {
+    "title": {
+      "fontFace": "Segoe UI Semibold",
+      "fontSize": 12,
+      "color": "#1F2937"
+    },
+    "label": {
+      "fontFace": "Segoe UI",
+      "fontSize": 10,
+      "color": "#6B7280"
+    },
+    "callout": {
+      "fontFace": "Segoe UI Semibold",
+      "fontSize": 26,
+      "color": "#1F2937"
+    }
+  }
+}

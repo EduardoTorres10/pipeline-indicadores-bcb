@@ -1,0 +1,482 @@
+/// Tabela só de medidas.
+table _Medidas
+	lineageTag: 7375de95-db51-4f27-a6a4-44a77e9bd33e
+
+	/// Meta Selic vigente no último dia do período filtrado.
+	measure 'Selic Meta' =
+			VAR UltimaData =
+				CALCULATE ( MAX ( fct_indicadores_diarios[data] ) )
+			RETURN
+				DIVIDE (
+					CALCULATE (
+						MAX ( fct_indicadores_diarios[selic_meta_aa] ),
+						fct_indicadores_diarios[data] = UltimaData
+					),
+					100
+				)
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Taxas
+		lineageTag: ba703acb-a1b3-4269-9c72-2d31a251ddc1
+
+	/// Selic média do mês contra o IPCA 12 meses (Fisher), no último mês com valor.
+	measure 'Juro Real Ex-Post' =
+			VAR UltimoMes =
+				CALCULATE (
+					MAX ( fct_inflacao_juro_real_mensal[mes] ),
+					NOT ISBLANK ( fct_inflacao_juro_real_mensal[juro_real_ex_post_aa] )
+				)
+			RETURN
+				DIVIDE (
+					CALCULATE (
+						MAX ( fct_inflacao_juro_real_mensal[juro_real_ex_post_aa] ),
+						fct_inflacao_juro_real_mensal[mes] = UltimoMes
+					),
+					100
+				)
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Taxas
+		lineageTag: 682bab64-4741-4740-a1f4-ec22fb113119
+
+	/// IPCA acumulado em 12 meses no último mês com valor do período.
+	measure 'IPCA 12 Meses' =
+			VAR UltimoMes =
+				CALCULATE (
+					MAX ( fct_inflacao_juro_real_mensal[mes] ),
+					NOT ISBLANK ( fct_inflacao_juro_real_mensal[ipca_12m_pct] )
+				)
+			RETURN
+				DIVIDE (
+					CALCULATE (
+						MAX ( fct_inflacao_juro_real_mensal[ipca_12m_pct] ),
+						fct_inflacao_juro_real_mensal[mes] = UltimoMes
+					),
+					100
+				)
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Inflação
+		lineageTag: bdf96a7a-7ad7-4c40-a1ee-b4ae2700be45
+
+	/// IPCA do mês; com vários meses no contexto, devolve o do último.
+	measure 'IPCA Mensal' =
+			VAR UltimoMes =
+				MAX ( fct_inflacao_juro_real_mensal[mes] )
+			RETURN
+				DIVIDE (
+					CALCULATE (
+						MAX ( fct_inflacao_juro_real_mensal[ipca_mensal_pct] ),
+						fct_inflacao_juro_real_mensal[mes] = UltimoMes
+					),
+					100
+				)
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Inflação
+		lineageTag: 438787a5-4fd2-42b8-a556-0b3b705c9380
+
+	/// Inflação composta de todos os meses do período: produto de (1 + taxa) - 1.
+	measure 'IPCA Acumulado no Período' =
+			VAR Meses =
+				COUNTROWS ( fct_inflacao_juro_real_mensal )
+			VAR Fator =
+				PRODUCTX (
+					fct_inflacao_juro_real_mensal,
+					1 + fct_inflacao_juro_real_mensal[ipca_mensal_pct] / 100
+				)
+			RETURN
+				IF ( Meses > 0, Fator - 1 )
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Inflação
+		lineageTag: 4b989531-fdf2-4f6d-b995-7c798b67e063
+
+	/// Para a matriz ano x mês: IPCA do mês nas células e acumulado do ano/período nos totais.
+	measure 'IPCA Matriz' =
+			IF (
+				ISINSCOPE ( dim_calendario[mes_nome] ),
+				[IPCA Mensal],
+				[IPCA Acumulado no Período]
+			)
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Inflação
+		lineageTag: 1346dfb3-8356-44c0-8332-4601dd3c2c93
+
+	/// Cotação no último dia do período (repete a última cotação em fins de semana).
+	measure 'Dólar Fechamento' =
+			VAR UltimaData =
+				CALCULATE ( MAX ( fct_indicadores_diarios[data] ) )
+			RETURN
+				CALCULATE (
+					MAX ( fct_indicadores_diarios[dolar_venda] ),
+					fct_indicadores_diarios[data] = UltimaData
+				)
+		formatString: \$#,0.###############;(\$#,0.###############);\$#,0.###############
+		displayFolder: Câmbio
+		lineageTag: 7e1ffb16-382f-4eed-9279-bc33677ec1ed
+
+	/// Cotação no primeiro dia do período.
+	measure 'Dólar Abertura' =
+			VAR PrimeiraData =
+				CALCULATE ( MIN ( fct_indicadores_diarios[data] ) )
+			RETURN
+				CALCULATE (
+					MAX ( fct_indicadores_diarios[dolar_venda] ),
+					fct_indicadores_diarios[data] = PrimeiraData
+				)
+		formatString: """R$"" #,##0.0000
+		displayFolder: Câmbio
+		lineageTag: 64a6042d-3fe7-4cdb-b3b5-2516f1e958d6
+
+	/// Média só dos dias com cotação.
+	measure 'Dólar Médio' =
+			CALCULATE (
+				AVERAGE ( fct_indicadores_diarios[dolar_venda] ),
+				fct_indicadores_diarios[dia_util] = TRUE ()
+			)
+		formatString: \$#,0.0000;(\$#,0.0000);\$#,0.0000
+		displayFolder: Câmbio
+		lineageTag: fb257676-e6e5-417e-9bf2-a5ea16b719a5
+
+	/// Média móvel de 21 dias úteis no último dia com cotação do período.
+	measure 'Dólar Média Móvel 21du' =
+			VAR UltimaData =
+				CALCULATE (
+					MAX ( fct_indicadores_diarios[data] ),
+					fct_indicadores_diarios[dia_util] = TRUE ()
+				)
+			RETURN
+				CALCULATE (
+					MAX ( fct_indicadores_diarios[dolar_media_movel_21du] ),
+					fct_indicadores_diarios[data] = UltimaData
+				)
+		formatString: """R$"" #,##0.0000
+		displayFolder: Câmbio
+		lineageTag: 0b13c048-07ec-42ce-ac7b-fb7de7b50497
+
+	/// Variação % entre a abertura e o fechamento do período.
+	measure 'Dólar Variação no Período' = DIVIDE ( [Dólar Fechamento] - [Dólar Abertura], [Dólar Abertura] )
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Câmbio
+		lineageTag: ec888957-3366-4090-837b-ff2bab25540c
+
+	/// Meta Selic exatamente 12 meses antes do último dia do período.
+	measure 'Selic Meta 12M Atrás' =
+			VAR UltimaData =
+				CALCULATE ( MAX ( fct_indicadores_diarios[data] ) )
+			VAR DataRef =
+				EDATE ( UltimaData, -12 )
+			RETURN
+				DIVIDE (
+					CALCULATE (
+						MAX ( fct_indicadores_diarios[selic_meta_aa] ),
+						REMOVEFILTERS ( dim_calendario ),
+						fct_indicadores_diarios[data] = DataRef
+					),
+					100
+				)
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Taxas
+		lineageTag: f514584a-dd28-4c5d-ab40-29a28904eca4
+
+	/// IPCA 12 meses no mesmo mês do ano anterior.
+	measure 'IPCA 12 Meses 12M Atrás' =
+			VAR UltimoMes =
+				CALCULATE (
+					MAX ( fct_inflacao_juro_real_mensal[mes] ),
+					NOT ISBLANK ( fct_inflacao_juro_real_mensal[ipca_12m_pct] )
+				)
+			VAR MesRef =
+				EDATE ( UltimoMes, -12 )
+			RETURN
+				DIVIDE (
+					CALCULATE (
+						MAX ( fct_inflacao_juro_real_mensal[ipca_12m_pct] ),
+						REMOVEFILTERS ( dim_calendario ),
+						fct_inflacao_juro_real_mensal[mes] = MesRef
+					),
+					100
+				)
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Inflação
+		lineageTag: c58ccc3e-36ab-4924-a006-c10f5a4823f6
+
+	/// Juro real ex-post no mesmo mês do ano anterior.
+	measure 'Juro Real 12M Atrás' =
+			VAR UltimoMes =
+				CALCULATE (
+					MAX ( fct_inflacao_juro_real_mensal[mes] ),
+					NOT ISBLANK ( fct_inflacao_juro_real_mensal[juro_real_ex_post_aa] )
+				)
+			VAR MesRef =
+				EDATE ( UltimoMes, -12 )
+			RETURN
+				DIVIDE (
+					CALCULATE (
+						MAX ( fct_inflacao_juro_real_mensal[juro_real_ex_post_aa] ),
+						REMOVEFILTERS ( dim_calendario ),
+						fct_inflacao_juro_real_mensal[mes] = MesRef
+					),
+					100
+				)
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Taxas
+		lineageTag: 2da7bf14-d117-4418-8bca-a32926a2ae6a
+
+	/// Cotação exatamente 12 meses antes do último dia do período.
+	measure 'Dólar 12M Atrás' =
+			VAR UltimaData =
+				CALCULATE ( MAX ( fct_indicadores_diarios[data] ) )
+			VAR DataRef =
+				EDATE ( UltimaData, -12 )
+			RETURN
+				CALCULATE (
+					MAX ( fct_indicadores_diarios[dolar_venda] ),
+					REMOVEFILTERS ( dim_calendario ),
+					fct_indicadores_diarios[data] = DataRef
+				)
+		formatString: """R$"" #,##0.0000
+		displayFolder: Câmbio
+		lineageTag: 96c765c6-a7c8-47b0-abcd-7a637c95cfc8
+
+	/// Variação % do fechamento contra 12 meses antes.
+	measure 'Dólar Variação em 12 Meses' = DIVIDE ( [Dólar Fechamento] - [Dólar 12M Atrás], [Dólar 12M Atrás] )
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Câmbio
+		lineageTag: b88af4ae-4491-4760-96c3-33d28bc06014
+
+	/// Maior cotação do período.
+	measure 'Dólar Máximo' =
+			CALCULATE (
+				MAX ( fct_indicadores_diarios[dolar_venda] ),
+				fct_indicadores_diarios[dia_util] = TRUE ()
+			)
+		formatString: \$#,0.###############;(\$#,0.###############);\$#,0.###############
+		displayFolder: Câmbio
+		lineageTag: 784878b8-309c-4568-96d5-20940b335731
+
+	/// Menor cotação do período.
+	measure 'Dólar Mínimo' =
+			CALCULATE (
+				MIN ( fct_indicadores_diarios[dolar_venda] ),
+				fct_indicadores_diarios[dia_util] = TRUE ()
+			)
+		formatString: \$#,0.###############;(\$#,0.###############);\$#,0.###############
+		displayFolder: Câmbio
+		lineageTag: d06bff22-5df3-4523-8e94-ae24a16f35cb
+
+	/// Centro da meta do CMN para o ano (2025 em diante: meta contínua de 3%).
+	measure 'Meta de Inflação' =
+			VAR Ano =
+				MAX ( dim_calendario[ano] )
+			VAR Meta =
+				SWITCH (
+					TRUE (),
+					Ano <= 2018, 4.5,
+					Ano = 2019, 4.25,
+					Ano = 2020, 4.0,
+					Ano = 2021, 3.75,
+					Ano = 2022, 3.5,
+					Ano = 2023, 3.25,
+					3.0
+				)
+			RETURN
+				IF ( NOT ISBLANK ( [IPCA 12 Meses] ), Meta / 100 )
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Inflação
+		lineageTag: 8fda6ed0-7ff7-4a82-8afe-c94df4315a1a
+
+	/// Intervalo de tolerância: 2 p.p. até 2016, 1,5 p.p. depois.
+	measure 'Tolerância da Meta' =
+			VAR Ano =
+				MAX ( dim_calendario[ano] )
+			RETURN
+				IF ( NOT ISBLANK ( [Meta de Inflação] ), IF ( Ano <= 2016, 0.02, 0.015 ) )
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Inflação
+		lineageTag: 52bc23f1-c845-429b-81f5-c821788a24dc
+
+	/// Limite superior da meta.
+	measure 'Teto da Meta' = IF ( NOT ISBLANK ( [Meta de Inflação] ), [Meta de Inflação] + [Tolerância da Meta] )
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Inflação
+		lineageTag: cb5f2692-528b-414a-8446-02697ed23675
+
+	/// Limite inferior da meta.
+	measure 'Piso da Meta' = IF ( NOT ISBLANK ( [Meta de Inflação] ), [Meta de Inflação] - [Tolerância da Meta] )
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Inflação
+		lineageTag: 81a987d2-4b5d-4eee-9ff8-a2b1a1328388
+
+	/// Quantidade de meses do período com IPCA 12 meses acima do teto da meta.
+	measure 'Meses Acima do Teto' =
+			COUNTROWS (
+				FILTER (
+					VALUES ( dim_calendario[inicio_mes] ),
+					[IPCA 12 Meses] > [Teto da Meta]
+				)
+			) + 0
+		formatString: 0
+		displayFolder: Inflação
+		lineageTag: 9744303d-b9fd-49a3-9139-989f71f8b4b0
+
+	/// Escala máxima do velocímetro de inflação.
+	measure 'Gauge Máximo' = MAX ( 0.12, [IPCA 12 Meses] * 1.2 )
+		formatString: 0.00%;-0.00%;0.00%
+		displayFolder: Inflação
+		lineageTag: d772eaef-51c7-470b-b7aa-c3b06973c13c
+
+	/// Seta e variação em p.p. contra 12 meses atrás.
+	measure 'Selic Tendência' =
+			VAR Atual = [Selic Meta]
+			VAR Ref = [Selic Meta 12M Atrás]
+			VAR Delta = Atual - Ref
+			RETURN
+				IF (
+					NOT ISBLANK ( Ref ),
+					IF ( Delta > 0, "▲ ", IF ( Delta < 0, "▼ ", "■ " ) )
+						& FORMAT ( ABS ( Delta ) * 100, "0.00" ) & " p.p. em 12 meses"
+				)
+		displayFolder: Tendência
+		lineageTag: 95b7e7e5-1669-4971-94da-80d6d1609970
+
+	/// Seta e variação em p.p. contra 12 meses atrás.
+	measure 'IPCA Tendência' =
+			VAR Atual = [IPCA 12 Meses]
+			VAR Ref = [IPCA 12 Meses 12M Atrás]
+			VAR Delta = Atual - Ref
+			RETURN
+				IF (
+					NOT ISBLANK ( Ref ),
+					IF ( Delta > 0, "▲ ", IF ( Delta < 0, "▼ ", "■ " ) )
+						& FORMAT ( ABS ( Delta ) * 100, "0.00" ) & " p.p. em 12 meses"
+				)
+		displayFolder: Tendência
+		lineageTag: 78dce89a-4569-4756-ac30-31a9248a7cbd
+
+	/// Seta e variação em p.p. contra 12 meses atrás.
+	measure 'Juro Real Tendência' =
+			VAR Atual = [Juro Real Ex-Post]
+			VAR Ref = [Juro Real 12M Atrás]
+			VAR Delta = Atual - Ref
+			RETURN
+				IF (
+					NOT ISBLANK ( Ref ),
+					IF ( Delta > 0, "▲ ", IF ( Delta < 0, "▼ ", "■ " ) )
+						& FORMAT ( ABS ( Delta ) * 100, "0.00" ) & " p.p. em 12 meses"
+				)
+		displayFolder: Tendência
+		lineageTag: f307058c-497d-4229-b3e8-4515c5555146
+
+	/// Seta e variação % contra 12 meses atrás.
+	measure 'Dólar Tendência' =
+			VAR Var12 = [Dólar Variação em 12 Meses]
+			RETURN
+				IF (
+					NOT ISBLANK ( Var12 ),
+					IF ( Var12 > 0, "▲ ", IF ( Var12 < 0, "▼ ", "■ " ) )
+						& FORMAT ( ABS ( Var12 ), "0.00%" ) & " em 12 meses"
+				)
+		displayFolder: Tendência
+		lineageTag: a57a9569-b123-4dee-b778-75f434627e5e
+
+	/// Situação do IPCA 12 meses frente à meta.
+	measure 'Meta Status' =
+			VAR Ipca = [IPCA 12 Meses]
+			RETURN
+				SWITCH (
+					TRUE (),
+					ISBLANK ( Ipca ), BLANK (),
+					Ipca > [Teto da Meta], "▲ Acima do teto da meta",
+					Ipca < [Piso da Meta], "▼ Abaixo do piso da meta",
+					"● Dentro do intervalo da meta"
+				)
+		displayFolder: Tendência
+		lineageTag: 0dd104ee-7757-4b2b-8436-c982f2a33458
+
+	/// Âmbar quando a Selic sobe, verde-água quando cai.
+	measure 'Cor Selic' =
+			VAR Delta = [Selic Meta] - [Selic Meta 12M Atrás]
+			RETURN
+				SWITCH ( TRUE (), Delta > 0, "#FBBF24", Delta < 0, "#2DD4BF", "#94A3B8" )
+		displayFolder: Cores
+		lineageTag: 7482eba1-7ca0-4ca7-92bc-940d167445e1
+
+	/// Vermelho quando a inflação sobe, verde quando cai.
+	measure 'Cor IPCA' =
+			VAR Delta = [IPCA 12 Meses] - [IPCA 12 Meses 12M Atrás]
+			RETURN
+				SWITCH ( TRUE (), Delta > 0, "#F87171", Delta < 0, "#34D399", "#94A3B8" )
+		displayFolder: Cores
+		lineageTag: c1bc0989-299c-4ae9-b158-2daa9e58dadd
+
+	/// Verde quando o juro real sobe, vermelho quando cai.
+	measure 'Cor Juro Real' =
+			VAR Delta = [Juro Real Ex-Post] - [Juro Real 12M Atrás]
+			RETURN
+				SWITCH ( TRUE (), Delta > 0, "#34D399", Delta < 0, "#F87171", "#94A3B8" )
+		displayFolder: Cores
+		lineageTag: 230e20f5-707c-4b34-8e7d-ce126685edec
+
+	/// Vermelho quando o dólar sobe (real se desvaloriza), verde quando cai.
+	measure 'Cor Dólar' =
+			VAR Var12 = [Dólar Variação em 12 Meses]
+			RETURN
+				SWITCH ( TRUE (), Var12 > 0, "#F87171", Var12 < 0, "#34D399", "#94A3B8" )
+		displayFolder: Cores
+		lineageTag: a2d2ae58-4acf-47a1-81ac-ccf0d9ac9156
+
+	/// Cor do status do IPCA frente à meta.
+	measure 'Cor Meta Status' =
+			VAR Ipca = [IPCA 12 Meses]
+			RETURN
+				SWITCH (
+					TRUE (),
+					Ipca > [Teto da Meta], "#F87171",
+					Ipca < [Piso da Meta], "#FBBF24",
+					"#34D399"
+				)
+		displayFolder: Cores
+		lineageTag: a8edd07c-0320-4713-94a1-69adfe6e40bc
+
+	/// Barras de juro real: verde se positivo, vermelho se negativo.
+	measure 'Cor Barra Juro Real' = IF ( [Juro Real Ex-Post] >= 0, "#34D399", "#F87171" )
+		displayFolder: Cores
+		lineageTag: 48ceb366-25d1-46fb-91ee-02bc9ed26074
+
+	/// Barras de variação do dólar: vermelho se subiu, verde se caiu.
+	measure 'Cor Barra Dólar' = IF ( [Dólar Variação no Período] >= 0, "#F87171", "#34D399" )
+		displayFolder: Cores
+		lineageTag: ad869f2a-813b-4885-949b-b12e71a8c7ad
+
+	/// Barras de IPCA: verde se deflação, âmbar até 0,5%, vermelho acima.
+	measure 'Cor Barra IPCA' =
+			VAR Ipca = [IPCA Mensal]
+			RETURN
+				SWITCH ( TRUE (), Ipca < 0, "#34D399", Ipca <= 0.005, "#FBBF24", "#F87171" )
+		displayFolder: Cores
+		lineageTag: 66bcff6e-a340-4591-9137-a80523376adb
+
+	/// Texto com a data mais recente dos dados.
+	measure 'Rótulo Atualização' =
+			"Dados até "
+				& FORMAT (
+					CALCULATE ( MAX ( fct_indicadores_diarios[data] ), REMOVEFILTERS ( dim_calendario ) ),
+					"dd/mm/yyyy"
+				)
+		displayFolder: Rótulos
+		lineageTag: 75d4981d-81d1-461d-99a9-05263a1e0020
+
+	column Coluna
+		dataType: string
+		isHidden
+		lineageTag: 932c61de-67c6-4d0e-9a01-86c3f6ad4d52
+		summarizeBy: none
+		sourceColumn: Coluna
+
+	partition _Medidas = m
+		mode: import
+		source =
+				let
+						Fonte = #table(type table [Coluna = text], {})
+					in
+						Fonte
+
+	annotation PBI_ResultType = Table
+

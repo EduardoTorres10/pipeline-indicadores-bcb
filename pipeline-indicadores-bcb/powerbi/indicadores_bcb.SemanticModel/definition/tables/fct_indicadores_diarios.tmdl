@@ -1,0 +1,83 @@
+/// Fato diário: Selic meta e dólar (1 linha por dia corrido).
+table fct_indicadores_diarios
+
+	column data
+		dataType: dateTime
+		isHidden
+		formatString: Short Date
+		summarizeBy: none
+		sourceColumn: data
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column ano
+		dataType: int64
+		formatString: 0
+		isHidden
+		summarizeBy: none
+		sourceColumn: ano
+
+	column mes
+		dataType: dateTime
+		isHidden
+		formatString: Short Date
+		summarizeBy: none
+		sourceColumn: mes
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column dia_util
+		dataType: boolean
+		formatString: """Sim"";""Sim"";""Não"""
+		summarizeBy: none
+		sourceColumn: dia_util
+
+	column selic_meta_aa
+		dataType: double
+		formatString: 0.00
+		summarizeBy: none
+		sourceColumn: selic_meta_aa
+
+	column dolar_venda
+		dataType: double
+		formatString: 0.0000
+		summarizeBy: none
+		sourceColumn: dolar_venda
+
+	column dolar_variacao_diaria_pct
+		dataType: double
+		formatString: 0.0000
+		summarizeBy: none
+		sourceColumn: dolar_variacao_diaria_pct
+
+	column dolar_media_movel_21du
+		dataType: double
+		formatString: 0.0000
+		summarizeBy: none
+		sourceColumn: dolar_media_movel_21du
+
+	partition fct_indicadores_diarios = m
+		mode: import
+		source = ```
+				let
+					Fonte = GoogleBigQuery.Database([BillingProject = "portfolio-dados-512321", UseStorageApi = false]),
+					Projeto = Fonte{[Name = "portfolio-dados-512321"]}[Data],
+					Marts = Projeto{[Name = "marts", Kind = "Schema"]}[Data],
+					Tabela = Marts{[Name = "fct_indicadores_diarios", Kind = "Table"]}[Data],
+					Tipos = Table.TransformColumnTypes(
+						Tabela,
+						{
+							{"data", type date},
+							{"ano", Int64.Type},
+							{"mes", type date},
+							{"dia_util", type logical},
+							{"selic_meta_aa", type number},
+							{"dolar_venda", type number},
+							{"dolar_variacao_diaria_pct", type number},
+							{"dolar_media_movel_21du", type number}
+						}
+					)
+				in
+					Tipos
+			```
+

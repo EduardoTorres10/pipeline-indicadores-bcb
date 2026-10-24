@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "indicadores_bcb"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "63953f5d-339a-4e9d-8922-80d005fcd911"
+  }
+}

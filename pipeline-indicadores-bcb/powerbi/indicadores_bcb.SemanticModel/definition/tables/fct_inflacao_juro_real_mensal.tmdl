@@ -1,0 +1,65 @@
+/// Fato mensal: IPCA, Selic média e juro real (1 linha por mês).
+table fct_inflacao_juro_real_mensal
+
+	column mes
+		dataType: dateTime
+		isHidden
+		formatString: Short Date
+		summarizeBy: none
+		sourceColumn: mes
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column ipca_mensal_pct
+		dataType: double
+		formatString: 0.00
+		summarizeBy: none
+		sourceColumn: ipca_mensal_pct
+
+	column ipca_acumulado_ano_pct
+		dataType: double
+		formatString: 0.00
+		summarizeBy: none
+		sourceColumn: ipca_acumulado_ano_pct
+
+	column ipca_12m_pct
+		dataType: double
+		formatString: 0.00
+		summarizeBy: none
+		sourceColumn: ipca_12m_pct
+
+	column selic_meta_media_aa
+		dataType: double
+		formatString: 0.00
+		summarizeBy: none
+		sourceColumn: selic_meta_media_aa
+
+	column juro_real_ex_post_aa
+		dataType: double
+		formatString: 0.00
+		summarizeBy: none
+		sourceColumn: juro_real_ex_post_aa
+
+	partition fct_inflacao_juro_real_mensal = m
+		mode: import
+		source = ```
+				let
+					Fonte = GoogleBigQuery.Database([BillingProject = "portfolio-dados-512321", UseStorageApi = false]),
+					Projeto = Fonte{[Name = "portfolio-dados-512321"]}[Data],
+					Marts = Projeto{[Name = "marts", Kind = "Schema"]}[Data],
+					Tabela = Marts{[Name = "fct_inflacao_juro_real_mensal", Kind = "Table"]}[Data],
+					Tipos = Table.TransformColumnTypes(
+						Tabela,
+						{
+							{"mes", type date},
+							{"ipca_mensal_pct", type number},
+							{"ipca_acumulado_ano_pct", type number},
+							{"ipca_12m_pct", type number},
+							{"selic_meta_media_aa", type number},
+							{"juro_real_ex_post_aa", type number}
+						}
+					)
+				in
+					Tipos
+			```
+

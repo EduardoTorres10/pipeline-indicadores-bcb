@@ -1,0 +1,73 @@
+/// Fato mensal: IPCA, Selic média e juro real (1 linha por mês).
+table fct_inflacao_juro_real_mensal
+	lineageTag: c03d89b2-ec92-4c5a-8c93-3074d5c89951
+
+	column mes
+		dataType: dateTime
+		isHidden
+		formatString: Short Date
+		lineageTag: 06f3df33-9007-46a7-9fcf-caa9e5a3b7ac
+		summarizeBy: none
+		sourceColumn: mes
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column ipca_mensal_pct
+		dataType: double
+		formatString: 0.00
+		lineageTag: 131d1ea4-192f-426b-a6eb-230cd7575cb7
+		summarizeBy: none
+		sourceColumn: ipca_mensal_pct
+
+	column ipca_acumulado_ano_pct
+		dataType: double
+		formatString: 0.00
+		lineageTag: e34d45c5-c2e1-41f3-b4a3-fbaec6caf963
+		summarizeBy: none
+		sourceColumn: ipca_acumulado_ano_pct
+
+	column ipca_12m_pct
+		dataType: double
+		formatString: 0.00
+		lineageTag: 6252b674-2ed0-407e-b85d-11b9a90ed505
+		summarizeBy: none
+		sourceColumn: ipca_12m_pct
+
+	column selic_meta_media_aa
+		dataType: double
+		formatString: 0.00
+		lineageTag: bf2d11a9-bf2f-4e24-9e86-4ab614c44562
+		summarizeBy: none
+		sourceColumn: selic_meta_media_aa
+
+	column juro_real_ex_post_aa
+		dataType: double
+		formatString: 0.00
+		lineageTag: 99c4343a-5316-4397-8b94-4be76dc2f373
+		summarizeBy: none
+		sourceColumn: juro_real_ex_post_aa
+
+	partition fct_inflacao_juro_real_mensal = m
+		mode: import
+		source =
+				let
+						Fonte = GoogleBigQuery.Database([BillingProject = "portfolio-dados-512321", UseStorageApi = false]),
+						Projeto = Fonte{[Name = "portfolio-dados-512321"]}[Data],
+						Marts = Projeto{[Name = "marts", Kind = "Schema"]}[Data],
+						Tabela = Marts{[Name = "fct_inflacao_juro_real_mensal", Kind = "Table"]}[Data],
+						Tipos = Table.TransformColumnTypes(
+							Tabela,
+							{
+								{"mes", type date},
+								{"ipca_mensal_pct", type number},
+								{"ipca_acumulado_ano_pct", type number},
+								{"ipca_12m_pct", type number},
+								{"selic_meta_media_aa", type number},
+								{"juro_real_ex_post_aa", type number}
+							}
+						)
+					in
+						Tipos
+
+	annotation PBI_ResultType = Table
+

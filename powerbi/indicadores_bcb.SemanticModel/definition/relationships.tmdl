@@ -1,0 +1,8 @@
+relationship rel_diario_calendario
+	fromColumn: fct_indicadores_diarios.data
+	toColumn: dim_calendario.data
+
+relationship rel_mensal_calendario
+	fromColumn: fct_inflacao_juro_real_mensal.mes
+	toColumn: dim_calendario.data
+

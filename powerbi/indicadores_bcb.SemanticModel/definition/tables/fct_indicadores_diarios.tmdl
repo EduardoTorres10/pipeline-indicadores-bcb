@@ -1,0 +1,93 @@
+/// Fato diário: Selic meta e dólar (1 linha por dia corrido).
+table fct_indicadores_diarios
+	lineageTag: e680b800-6927-43bd-b6b7-f07be0764e7d
+
+	column data
+		dataType: dateTime
+		isHidden
+		formatString: Short Date
+		lineageTag: 7aa25e03-9da8-4444-a12e-c9e6b3324bc4
+		summarizeBy: none
+		sourceColumn: data
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column ano
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 28bd6f2b-4d65-46b7-a35d-89d5b8a60f70
+		summarizeBy: none
+		sourceColumn: ano
+
+	column mes
+		dataType: dateTime
+		isHidden
+		formatString: Short Date
+		lineageTag: 56f4403e-3a99-4ce1-9313-e857494ec72f
+		summarizeBy: none
+		sourceColumn: mes
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column dia_util
+		dataType: boolean
+		formatString: """Sim"";""Sim"";""Não"""
+		lineageTag: e74f4028-cef5-47eb-b1aa-1195be4a52a5
+		summarizeBy: none
+		sourceColumn: dia_util
+
+	column selic_meta_aa
+		dataType: double
+		formatString: 0.00
+		lineageTag: 4baabdab-be2a-4c2c-ae91-c91a3a501558
+		summarizeBy: none
+		sourceColumn: selic_meta_aa
+
+	column dolar_venda
+		dataType: double
+		formatString: 0.0000
+		lineageTag: f4d2a051-65fe-4124-9042-8ed0ceb86bb1
+		summarizeBy: none
+		sourceColumn: dolar_venda
+
+	column dolar_variacao_diaria_pct
+		dataType: double
+		formatString: 0.0000
+		lineageTag: 50c8679d-dab4-4d42-a8bc-acdf4ce86764
+		summarizeBy: none
+		sourceColumn: dolar_variacao_diaria_pct
+
+	column dolar_media_movel_21du
+		dataType: double
+		formatString: 0.0000
+		lineageTag: f22e4e06-db7a-47df-96dc-38b703ac3a74
+		summarizeBy: none
+		sourceColumn: dolar_media_movel_21du
+
+	partition fct_indicadores_diarios = m
+		mode: import
+		source =
+				let
+						Fonte = GoogleBigQuery.Database([BillingProject = "portfolio-dados-512321", UseStorageApi = false]),
+						Projeto = Fonte{[Name = "portfolio-dados-512321"]}[Data],
+						Marts = Projeto{[Name = "marts", Kind = "Schema"]}[Data],
+						Tabela = Marts{[Name = "fct_indicadores_diarios", Kind = "Table"]}[Data],
+						Tipos = Table.TransformColumnTypes(
+							Tabela,
+							{
+								{"data", type date},
+								{"ano", Int64.Type},
+								{"mes", type date},
+								{"dia_util", type logical},
+								{"selic_meta_aa", type number},
+								{"dolar_venda", type number},
+								{"dolar_variacao_diaria_pct", type number},
+								{"dolar_media_movel_21du", type number}
+							}
+						)
+					in
+						Tipos
+
+	annotation PBI_ResultType = Table
+

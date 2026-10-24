@@ -1,0 +1,127 @@
+/// Dimensão de datas (tabela de datas do modelo).
+table dim_calendario
+	lineageTag: 7f8ea487-0947-4c4f-8852-9a1178b35567
+	dataCategory: Time
+
+	column data
+		dataType: dateTime
+		isKey
+		formatString: Short Date
+		lineageTag: 7e8a1db3-c59d-4fd9-ba4b-ec1148f5e87b
+		summarizeBy: none
+		sourceColumn: data
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column ano
+		dataType: int64
+		formatString: 0
+		lineageTag: 4df52946-9c39-47c4-bd4b-46b8fb796284
+		summarizeBy: none
+		sourceColumn: ano
+
+	column trimestre
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: bcc2b0cc-8b7d-4454-b516-ac9455beb2d2
+		summarizeBy: none
+		sourceColumn: trimestre
+
+	column ano_trimestre
+		dataType: string
+		lineageTag: 0c5a883f-ded6-4875-bd3a-93fab0860192
+		summarizeBy: none
+		sourceColumn: ano_trimestre
+
+	column mes_numero
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 4f6e7d60-de43-4ffc-8bf2-558184813cfd
+		summarizeBy: none
+		sourceColumn: mes_numero
+
+	column mes_nome
+		dataType: string
+		lineageTag: aee2ebb8-daa8-4c90-93f4-34be0c678f55
+		summarizeBy: none
+		sourceColumn: mes_nome
+		sortByColumn: mes_numero
+
+	column mes_ano
+		dataType: string
+		lineageTag: a4135e3a-6534-44a3-a441-ad615dc50050
+		summarizeBy: none
+		sourceColumn: mes_ano
+		sortByColumn: mes_ano_ordem
+
+	column mes_ano_ordem
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 47d9c577-c6a0-46e0-9b93-9f19fd8ff977
+		summarizeBy: none
+		sourceColumn: mes_ano_ordem
+
+	column inicio_mes
+		dataType: dateTime
+		formatString: mmm/yyyy
+		lineageTag: c5d1f5bc-b736-4f78-a0cc-3b678d4eda84
+		summarizeBy: none
+		sourceColumn: inicio_mes
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column dia_semana_numero
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: a8c1c65e-578d-4289-b17c-384419c2e02c
+		summarizeBy: none
+		sourceColumn: dia_semana_numero
+
+	column dia_semana_nome
+		dataType: string
+		lineageTag: 51502354-d441-4882-81a0-3b0e58e9b044
+		summarizeBy: none
+		sourceColumn: dia_semana_nome
+		sortByColumn: dia_semana_numero
+
+	column fim_de_semana
+		dataType: boolean
+		formatString: """Sim"";""Sim"";""Não"""
+		lineageTag: e974b44c-116a-4d3c-89f1-65e3e32a97f5
+		summarizeBy: none
+		sourceColumn: fim_de_semana
+
+	partition dim_calendario = m
+		mode: import
+		source =
+				let
+						Fonte = GoogleBigQuery.Database([BillingProject = "portfolio-dados-512321", UseStorageApi = false]),
+						Projeto = Fonte{[Name = "portfolio-dados-512321"]}[Data],
+						Marts = Projeto{[Name = "marts", Kind = "Schema"]}[Data],
+						Tabela = Marts{[Name = "dim_calendario", Kind = "Table"]}[Data],
+						Tipos = Table.TransformColumnTypes(
+							Tabela,
+							{
+								{"data", type date},
+								{"ano", Int64.Type},
+								{"trimestre", Int64.Type},
+								{"ano_trimestre", type text},
+								{"mes_numero", Int64.Type},
+								{"mes_nome", type text},
+								{"mes_ano", type text},
+								{"mes_ano_ordem", Int64.Type},
+								{"inicio_mes", type date},
+								{"dia_semana_numero", Int64.Type},
+								{"dia_semana_nome", type text},
+								{"fim_de_semana", type logical}
+							}
+						)
+					in
+						Tipos
+
+	annotation PBI_ResultType = Table
+
